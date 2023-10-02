@@ -1,0 +1,11 @@
+# ignore all pycache folders in the project directory
+__pycache__/
+# ignore user files
+/backend/user_data
+/frontend/src/data
+# ignore build-in python environment and environment config file
+/frontend/environment
+/frontend/config.json
+# ignore temp files and directories
+test*.py
+
