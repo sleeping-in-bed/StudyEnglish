@@ -9,8 +9,7 @@ from cryptography.fernet import Fernet
 import network_util
 from psplpy import data_access
 from base import Base
-
-base_dir = os.path.dirname(os.path.abspath(__file__))
+from __init__ import base_dir
 
 '''
 user:

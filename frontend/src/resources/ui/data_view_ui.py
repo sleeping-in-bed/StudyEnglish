@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'D:\WorkSpace\PycharmProjects\MyApplications\Study_PyQt6\StudyEng\engineering\frontend\gui\resources\ui\data_view.ui'
+# -*- coding: utf-8 -*-
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #

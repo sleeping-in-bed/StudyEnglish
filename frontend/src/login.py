@@ -10,8 +10,6 @@ from resources.ui.login_ui import Ui_Form
 from main import Window
 from app_logic import login_authentication, User
 
-basedir = os.path.dirname(os.path.abspath(__file__))
-
 
 class LoginWindow(AcrylicWindow, Ui_Form):
 

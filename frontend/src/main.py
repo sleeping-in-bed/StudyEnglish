@@ -1,7 +1,8 @@
 # coding:utf-8
+import os
 import sys
 from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QIcon, QDesktopServices, QPainterPath, QPixmap, QPainter
+from PyQt6.QtGui import QIcon, QDesktopServices, QPainterPath, QPixmap, QPainter, QShortcut, QKeySequence
 from PyQt6.QtWidgets import QApplication, QFrame, QHBoxLayout, QWidget, QGridLayout, QStackedWidget, QVBoxLayout
 from qfluentwidgets import (NavigationItemPosition, MessageBox, setTheme, Theme, SplitFluentWindow,
                             NavigationAvatarWidget, qrouter, SubtitleLabel, setFont, PushButton, PrimaryPushButton,
@@ -9,8 +10,9 @@ from qfluentwidgets import (NavigationItemPosition, MessageBox, setTheme, Theme,
 from qfluentwidgets.components.widgets.acrylic_label import AcrylicBrush
 
 from app_logic import get_chart_html
-from resources.ui import main_page_ui, study_ui, study_finish_ui, data_view_ui
+from resources.ui import data_view_ui, study_page_ui
 from study import StudyGui
+from __init__ import base_dir
 
 
 class DataView(QWidget, data_view_ui.Ui_Form):
@@ -30,96 +32,45 @@ class DataView(QWidget, data_view_ui.Ui_Form):
         self.webEngineView.setHtml(self.chart_html)
 
 
-
-class HomeChild1(QWidget, main_page_ui.Ui_Form):
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
-
-        # self.theme_button.setIcon(FluentIcon.CONSTRACT)
-        # self.theme_button.installEventFilter(ToolTipFilter(self.theme_button))
-        # self.theme_button.setToolTip(self.tr('Toggle theme'))
-        # self.theme_button.clicked.connect(lambda: toggleTheme(True))
-
-    def paintEvent(self, e):
-        painter = QPainter(self)
-        # 加载图片
-        pixmap = QPixmap(":/images/background.jpg").scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation)  # 用你的图片文件路径替换 "image.jpg"
-        painter.drawPixmap(0, 0, pixmap)
-
-
-class HomeChild2(QWidget, study_ui.Ui_Form):
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
-        self.return_button.setIcon(FluentIcon.RETURN)
-
-        self.set_background()
-
-    def set_background(self):
-        self.acrylicBrush = AcrylicBrush(self, 15)
-        self.acrylicBrush.setImage(QPixmap(":/images/background.jpg").scaled(900, 700, Qt.AspectRatioMode.KeepAspectRatio))
-
-    def paintEvent(self, e):
-        if True:
-            self.acrylicBrush.paint()
-            super().paintEvent(e)
-
-
-class HomeChild3(QWidget, study_finish_ui.Ui_Form):
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
-
-        self.set_background()
-
-    def set_background(self):
-        self.acrylicBrush = AcrylicBrush(self, 15)
-        self.acrylicBrush.setImage(QPixmap(":/images/background.jpg").scaled(900, 700, Qt.AspectRatioMode.KeepAspectRatio))
-
-    def paintEvent(self, e):
-        if True:
-            self.acrylicBrush.paint()
-            super().paintEvent(e)
-
-
-class Home(QFrame):
+class Home(QWidget, study_page_ui.Ui_Form):
     def __init__(self, text: str, parent=None):
         super().__init__(parent=parent)
-        self.layout = QVBoxLayout(self)
-        self.stacked_widget = QStackedWidget()
-        self.layout.addWidget(self.stacked_widget)
+        self.setupUi(self)
         self.setObjectName(text.replace(' ', '-'))
         # !IMPORTANT: leave some space for title bar
-        self.layout.setContentsMargins(0, 40, 0, 0)
-
-        self.main_page = HomeChild1()
-        self.study_page = HomeChild2()
-        self.study_finish_page = HomeChild3()
-
-        self.stacked_widget.addWidget(self.main_page)
-        self.stacked_widget.addWidget(self.study_page)
-        self.stacked_widget.addWidget(self.study_finish_page)
+        self.horizontalLayout.setContentsMargins(0, 40, 0, 0)
 
         self.study = StudyGui()
-        self.main_page.learn_button.setText(f'Learn\n{self.study.new_words_num}')
-        self.main_page.review_button.setText(f'Review\n{self.study.review_words_num}')
+        self.learn_button.setText(f'Learn\n{self.study.new_words_num}')
+        self.review_button.setText(f'Review\n{self.study.review_words_num}')
+        self.learn_button.clicked.connect(self.study_new)
+        self.review_button.clicked.connect(self.study_review)
 
-        self.main_page.learn_button.clicked.connect(self.study_new)
-        self.main_page.review_button.clicked.connect(self.study_review)
-        self.study_page.return_button.clicked.connect(self.return_main_page)
-        self.study_page.know_button.clicked.connect(self.show_chinese_and_wrong_and_correct_button)
-        self.study_page.unknow_button.clicked.connect(self.unknow)
-        self.study_page.correct_button.clicked.connect(self.correct)
-        self.study_page.wrong_button.clicked.connect(self.wrong)
-        self.study_page.continue_button.clicked.connect(self.next_word)
-        self.study_finish_page.pushButton.clicked.connect(self.study_finished)
+        self.return_button.setIcon(FluentIcon.RETURN)
+        self.return_button.clicked.connect(self.return_main_page)
+        self.know_button.clicked.connect(self.show_chinese_and_wrong_and_correct_button)
+        self.not_know_button.clicked.connect(self.not_know)
+        self.correct_button.clicked.connect(self.correct)
+        self.wrong_button.clicked.connect(self.wrong)
+        self.continue_button.clicked.connect(self.next_word)
+
+        self.finish_continue_button.clicked.connect(self.study_finished)
+
+        # 创建快捷键并将其绑定到按钮上
+        know_button_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Left), self)
+        know_button_shortcut.activated.connect(self.activate_left_button)
+        not_know_button_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Right), self)
+        not_know_button_shortcut.activated.connect(self.activate_right_button)
+
+        self.set_background()
 
     def study_init(self):
-        self.study_page.word_label.setText(self.study.studying_word)
-        self.study_page.progress_label.setText(
+        self.word_label.setText(self.study.studying_word)
+        self.progress_label.setText(
             f'{self.study.get_finished_words_num()}/{self.study.every_turn_study_words_num}')
-        self.stacked_widget.setCurrentWidget(self.study_page)
+        self.stackedWidget.setCurrentWidget(self.study_page)
+        # 调用 update() 方法触发 paintEvent
+        self.update()
 
     def study_new(self):
         self.study.study_init(self.study.new_mode)
@@ -130,16 +81,18 @@ class Home(QFrame):
         self.study_init()
 
     def return_main_page(self):
-        self.stacked_widget.setCurrentWidget(self.main_page)
+        self.stackedWidget.setCurrentWidget(self.main_page)
+        # 调用 update() 方法触发 paintEvent
+        self.update()
 
     def show_chinese_and_wrong_and_correct_button(self):
-        self.study_page.chinese_label.setText(self.study.get_studying_word_chinese())
-        self.study_page.stackedWidget.setCurrentWidget(self.study_page.page_2)
+        self.chinese_label.setText(self.study.get_studying_word_chinese())
+        self.button_stackedWidget.setCurrentWidget(self.correct_page)
 
-    def unknow(self):
+    def not_know(self):
         self.study.zero_cleaning_meaning_study_time_and_set_not_know_true()
-        self.study_page.chinese_label.setText(self.study.get_studying_word_chinese())
-        self.study_page.stackedWidget.setCurrentWidget(self.study_page.page_3)
+        self.chinese_label.setText(self.study.get_studying_word_chinese())
+        self.button_stackedWidget.setCurrentWidget(self.continue_page)
 
     def wrong(self):
         self.study.zero_cleaning_meaning_study_time_and_set_not_know_true()
@@ -151,16 +104,58 @@ class Home(QFrame):
 
     def next_word(self):
         if self.study.next_word():
-            self.study_page.chinese_label.setText('')
-            self.study_page.word_label.setText(self.study.studying_word)
-            self.study_page.progress_label.setText(
+            self.chinese_label.setText('')
+            self.word_label.setText(self.study.studying_word)
+            self.progress_label.setText(
                 f'{self.study.get_finished_words_num()}/{self.study.every_turn_study_words_num}')
-            self.study_page.stackedWidget.setCurrentWidget(self.study_page.page)
+            self.button_stackedWidget.setCurrentWidget(self.know_page)
         else:
-            self.stacked_widget.setCurrentWidget(self.study_finish_page)
+            self.stackedWidget.setCurrentWidget(self.finish_page)
 
     def study_finished(self):
         self.return_main_page()
+
+    def activate_left_button(self):
+        object_name = self.stackedWidget.currentWidget().objectName()
+        if object_name == self.main_page.objectName():
+            self.learn_button.click()
+        elif object_name == self.study_page.objectName():
+            object_name = self.button_stackedWidget.currentWidget().objectName()
+            if object_name == self.know_page.objectName():
+                self.know_button.click()
+            elif object_name == self.correct_page.objectName():
+                self.correct_button.click()
+            elif object_name == self.continue_page.objectName():
+                self.continue_button.click()
+        elif object_name == self.finish_page.objectName():
+            self.finish_continue_button.click()
+
+    def activate_right_button(self):
+        object_name = self.stackedWidget.currentWidget().objectName()
+        if object_name == self.main_page.objectName():
+            self.review_button.click()
+        elif object_name == self.study_page.objectName():
+            object_name = self.button_stackedWidget.currentWidget().objectName()
+            if object_name == self.know_page.objectName():
+                self.not_know_button.click()
+            elif object_name == self.correct_page.objectName():
+                self.wrong_button.click()
+
+    def set_background(self):
+        self.acrylicBrush = AcrylicBrush(self, 15)
+        self.acrylicBrush.setImage(QPixmap(":/images/background.jpg").scaled(self.size(),
+                                                                             Qt.AspectRatioMode.KeepAspectRatio))
+
+    def paintEvent(self, e):
+        if self.stackedWidget.currentWidget().objectName() == self.main_page.objectName():
+            painter = QPainter(self)
+            pixmap = QPixmap(":/images/background.jpg").scaled(self.size(),
+                                                               Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                                                               Qt.TransformationMode.SmoothTransformation)
+            painter.drawPixmap(0, 0, pixmap)
+        else:
+            self.acrylicBrush.paint()
+        super().paintEvent(e)
 
 
 class Widget(QFrame):
@@ -198,7 +193,7 @@ class Window(SplitFluentWindow):
         # add custom widget to bottom
         self.navigationInterface.addWidget(
             routeKey='avatar',
-            widget=NavigationAvatarWidget('zhiyiYo', r'resources/images/shoko.png'),
+            widget=NavigationAvatarWidget('zhiyiYo', os.path.join(base_dir, r'resources/images/shoko.png')),
             onClick=self.showMessageBox,
             position=NavigationItemPosition.BOTTOM,
         )
@@ -213,7 +208,6 @@ class Window(SplitFluentWindow):
         desktop = QApplication.screens()[0].availableGeometry()
         w, h = desktop.width(), desktop.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
-
 
     def showMessageBox(self):
         w = MessageBox(
